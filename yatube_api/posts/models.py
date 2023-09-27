@@ -1,10 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
+from .constants import SIMBOLS_QUANTITY
+
 User = get_user_model()
-
-
-SIMBOLS_QUANTITY = 30  # вынести в отдельный файл
 
 
 class Group(models.Model):
