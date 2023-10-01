@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, generics, status, viewsets
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import (IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
 from api.permissions import IsAuthorOrReadOnly
@@ -66,8 +66,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         return Comment.objects.filter(post=self.get_post())
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user,
-                        post=self.get_post())
+        serializer.save(author=self.request.user, post=self.get_post())
 
 
 class FollowList(generics.ListCreateAPIView):
@@ -89,17 +88,10 @@ class FollowList(generics.ListCreateAPIView):
         )
 
     def create(self, request, *args, **kwargs):
-        follows_list = list(self.get_queryset().values_list(
-            'following__username', flat=True))
-        if 'following' not in request.data.keys():
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        elif request.data['following'] == request.user.username:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        elif request.data['following'] in follows_list:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(
-            serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )

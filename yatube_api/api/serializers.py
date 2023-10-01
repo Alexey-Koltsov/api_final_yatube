@@ -55,3 +55,21 @@ class FollowSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow
         fields = ('user', 'following')
+
+    def get_queryset(self):
+        return self.context['request'].user.following_set.all()
+
+    def validate(self, attrs):
+        request = self.context['request']
+        follows_list = list(self.get_queryset().values_list(
+            'following__username', flat=True))
+        if attrs['following'].username == request.user.username:
+            raise serializers.ValidationError(
+                'Подписываться на самого себя запрещено!'
+            )
+        elif attrs['following'].username in follows_list:
+            raise serializers.ValidationError(
+                f'{request.user.username} уже подписан(а)'
+                f' на {attrs["following"].username}!'
+            )
+        return attrs
