@@ -1,16 +1,14 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from rest_framework import filters
-from rest_framework import status, viewsets
+from rest_framework import filters, generics, status, viewsets
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import (IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import (IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
 from api.permissions import IsAuthorOrReadOnly
 from api.serializers import (CommentSerializer, FollowSerializer,
                              GroupSerializer, PostSerializer)
-from posts.models import Comment, Follow, Group, Post
+from posts.models import Comment, Group, Post
 
 
 User = get_user_model()
@@ -65,37 +63,28 @@ class CommentViewSet(viewsets.ModelViewSet):
         return get_object_or_404(Post, id=self.kwargs['post_id'])
 
     def get_queryset(self):
-        post = self.get_post()
-        return Comment.objects.filter(post=post)
+        return Comment.objects.filter(post=self.get_post())
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user,
                         post=self.get_post())
 
 
-class FollowViewSet(viewsets.ModelViewSet):
+class FollowList(generics.ListCreateAPIView):
     """
     Получаем список всех авторов на кого подписан пользователь.
     Добавляем подписку для пользователя по username.
     """
 
     serializer_class = FollowSerializer
-    permission_classes = [
-        IsAuthenticated,
-        IsAuthorOrReadOnly,
-    ]
     filter_backends = (filters.SearchFilter,)
     search_fields = ('user__username', 'following__username')
 
     def get_queryset(self):
-        return Follow.objects.filter(user=self.request.user)
-
-    def get_following(self):
-        return get_object_or_404(User, username=self.request.data['following'])
+        return self.request.user.following_set.all()
 
     def perform_create(self, serializer):
         serializer.save(
-            following=self.get_following(),
             user=self.request.user,
         )
 
