@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, generics, status, viewsets
+from rest_framework import filters, generics, mixins, status, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
@@ -69,7 +69,8 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user, post=self.get_post())
 
 
-class FollowList(generics.ListCreateAPIView):
+class FollowCreateList(mixins.CreateModelMixin,
+                       mixins.ListModelMixin, viewsets.GenericViewSet):
     """
     Получаем список всех авторов на кого подписан пользователь.
     Добавляем подписку для пользователя по username.
@@ -85,13 +86,4 @@ class FollowList(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(
             user=self.request.user,
-        )
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(
-            serializer.data, status=status.HTTP_201_CREATED, headers=headers
         )
